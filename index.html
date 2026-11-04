@@ -1,0 +1,111 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The Philosophy Web — a map of thinkers and their books</title>
+<meta name="description" content="An interactive web of philosophers, their books and influences, from Thales to today.">
+<meta property="og:title" content="The Philosophy Web"><meta property="og:description" content="Philosophers, books and influences as one interactive web."><meta property="og:image" content="cover.png"><link rel="icon" type="image/png" href="favicon.png"><link rel="apple-touch-icon" href="icon-500.png">
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="cover.png">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=EB+Garamond:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script><script src="data.js"></script>
+<style>
+:root{--ink:#0d0b08;--paper:#e8dcc0;--gold:#d4a84a;--dim:#8a7a5c}
+*{box-sizing:border-box}html,body{margin:0;height:100%;background:var(--ink);color:var(--paper);font-family:'EB Garamond',Georgia,serif;overflow:hidden}
+body:before{content:"";position:fixed;inset:0;background:radial-gradient(ellipse at 50% 40%,#2a2114 0%,#0d0b08 70%);z-index:-1}
+header{position:fixed;top:0;left:0;right:0;padding:14px 22px;display:flex;gap:16px;align-items:center;z-index:5;background:linear-gradient(#0d0b08ee,#0d0b0800)}
+h1{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:28px;margin:0;color:var(--gold);letter-spacing:.04em;white-space:nowrap}
+h1 i{color:var(--dim);font-weight:400;font-size:16px;margin-left:8px}
+input,select,button{font-family:inherit;font-size:15px;background:#1a150ecc;color:var(--paper);border:1px solid #4a3c24;border-radius:4px;padding:7px 10px}
+button{cursor:pointer}button:hover{border-color:var(--gold);color:var(--gold)}
+#search{width:220px}.sp{flex:1}
+#legend{position:fixed;left:18px;bottom:54px;font-size:13px;z-index:4;display:flex;flex-direction:column;gap:2px;background:#0d0b08aa;padding:8px 10px;border:1px solid #2e2516;border-radius:4px}
+#legend span{cursor:pointer;opacity:.9}#legend span.off{opacity:.3}#legend b{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px}
+svg{width:100vw;height:100vh;display:block}
+.link{stroke-opacity:.28}.link.c{stroke-dasharray:4 3}.link.r{stroke-dasharray:1 3}
+.node circle{stroke:#0d0b08;stroke-width:1.5;cursor:pointer}.node{cursor:pointer}.node text{font-family:'Cormorant Garamond',serif;fill:var(--paper);font-size:13px;pointer-events:none;paint-order:stroke;stroke:#0d0b08;stroke-width:3px}
+.book circle{fill:#e8dcc0}.book text{font-size:10px;fill:var(--dim);font-style:italic}
+.faded{opacity:.08}.hl circle.base,.hl circle.ring{stroke:var(--gold);stroke-width:3}
+#panel{position:fixed;top:62px;right:0;width:440px;max-width:92vw;height:calc(100% - 100px);background:#15110bf2;border-left:1px solid #4a3c24;padding:22px 26px 26px;overflow-y:auto;transform:translateX(100%);transition:.3s;z-index:6}
+#panel.open{transform:none}#panel h2{font-family:'Cormorant Garamond',serif;font-size:34px;margin:0;color:var(--gold)}
+#panel .meta{color:var(--dim);font-style:italic}#panel h3{font-family:'Cormorant Garamond',serif;color:var(--gold);border-bottom:1px solid #3a2e1c;padding-bottom:4px;margin-top:22px}
+#panel li{margin:6px 0}#panel .yr{color:var(--dim)}#panel a{color:var(--paper);cursor:pointer;text-decoration:underline dotted}#x{position:absolute;top:12px;right:12px}
+#donate{position:fixed;inset:0;background:#000c;display:none;align-items:center;justify-content:center;z-index:9}#donate.open{display:flex}
+#donate .box{background:#15110b;border:1px solid var(--gold);padding:28px;max-width:640px;width:94vw;border-radius:6px}
+#donate h2{font-family:'Cormorant Garamond',serif;color:var(--gold);margin-top:0}.addr{display:flex;gap:8px;align-items:center;margin:10px 0}.addr b{width:40px;color:var(--gold)}
+.addr code{flex:1;font-size:12px;word-break:break-all;background:#0d0b08;padding:8px;border-radius:3px}
+footer{position:fixed;bottom:0;left:0;right:0;padding:10px 22px;font-size:13px;color:var(--dim);display:flex;gap:14px;z-index:4;background:linear-gradient(#0d0b0800,#0d0b08ee)}footer a{color:var(--gold)}
+
+.node image{pointer-events:none}.node .ring{fill:none;stroke-width:2.2}.node .ini{font-family:'Cormorant Garamond',serif;fill:#0d0b08;font-weight:600;text-anchor:middle;stroke:none;paint-order:normal}
+#panel .por{width:100%;display:flex;gap:16px;align-items:center;margin-bottom:10px}#panel .por img,#panel .por .ph{width:120px;height:120px;border-radius:50%;object-fit:cover;object-position:top;border:2px solid var(--gold);flex:none}
+#panel .ph{display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:44px;color:#0d0b08}
+#panel .cap{font-size:11px;color:var(--dim)}#panel .cap a{color:var(--dim)}#panel dl{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;font-size:14px;margin:10px 0}#panel dt{color:var(--dim)}#panel dd{margin:0}
+#panel blockquote{border-left:2px solid var(--gold);margin:14px 0;padding:4px 12px;font-style:italic;font-family:'Cormorant Garamond',serif;font-size:19px}
+#panel .start{background:#2a2114;border:1px solid #4a3c24;padding:8px 12px;border-radius:4px;margin-top:14px}#panel .ideas li{margin:3px 0}
+</style></head><body>
+<header><h1><img src="icon-500.png" alt="" style="width:34px;height:34px;border-radius:50%;vertical-align:-7px;margin-right:10px;border:1px solid #6a5530">The Philosophy Web<i>thinkers · books · influence</i></h1><input id="search" placeholder="Search a philosopher or book…" list="names"><datalist id="names"></datalist>
+<select id="era"><option value="">All eras &amp; schools</option></select><label style="font-size:14px"><input type="checkbox" id="books"> show books</label><span class="sp"></span><button id="reset">Reset view</button><button id="sup">✦ Support the web</button></header>
+<svg id="g"><defs><clipPath id="cc" clipPathUnits="objectBoundingBox"><circle cx=".5" cy=".5" r=".5"/></clipPath></defs></svg><div id="legend"></div>
+<aside id="panel"><button id="x">✕</button><div id="pc"></div></aside>
+<div id="donate"><div class="box"><h2>Support the web</h2><p>This map is free. If it helped you, tips keep it growing.</p>
+<div class="addr"><b>SOL</b><code>G1sH8ermdy5QATeJgDeHNWX48SHojvJEpNECf2a9rERM</code><button class="cp">Copy</button></div>
+<div class="addr"><b>ETH</b><code>0x33A121411C30A4AD0E3416771C0D94B49bFeF570</code><button class="cp">Copy</button></div>
+<div class="addr"><b>BTC</b><code>bc1pntrnksv9cx3ztx45jwsxqrh2900ju22m22y9td82jufllln4d9asnv2y6r</code><button class="cp">Copy</button></div>
+<p style="text-align:right"><button onclick="donate.classList.remove('open')">Close</button></p></div></div>
+<footer><span id="stats"></span><span class="sp"></span><span>Solid = influenced · dashed = critiqued · dotted = responded to</span><span>Created by <a href="https://x.com/millerman" target="_blank" rel="noopener">Millerman</a></span><a href="CREDITS.md" target="_blank">Image credits</a><a href="#" onclick="donate.classList.add('open');return false">Donate</a></footer>
+<script>
+const col=d3.scaleOrdinal(ERAS,["#c9a35a","#e6c36a","#b08d57","#d16f4e","#8fa9c9","#7fb08a","#e2d27a","#c27bb0","#e07a5f","#9fd3c7","#83a6e0","#b55d5d","#c9a0dc","#f2a65a"]);
+const ids=new Set(P.map(p=>p.id));
+const people=P.map(p=>Object.assign({},p,{life:p.died&&p.died!=="—"?`${p.born} – ${p.died}`:`born ${p.born}`,kind:"p"}));
+const pe=E.filter(e=>ids.has(e.source)&&ids.has(e.target));
+const byId=Object.fromEntries(people.map(p=>[p.id,p]));
+pe.forEach(e=>{byId[e.source].deg=(byId[e.source].deg||0)+1;byId[e.target].deg=(byId[e.target].deg||0)+1});
+const bookNodes=[],bookEdges=[];people.forEach(p=>p.books.forEach((b,i)=>{const id=p.id+"_b"+i;bookNodes.push({id,name:b[0],year:b[1],sum:b[2],era:p.era,kind:"b",author:p.id});bookEdges.push({source:p.id,target:id,type:"b"})}));
+const nBooks=bookNodes.length;
+document.getElementById("stats").textContent=`${people.length} philosophers · ${nBooks} books · ${pe.length} influence links`;
+ERAS.forEach(e=>era.insertAdjacentHTML("beforeend",`<option>${e}</option>`));
+names.innerHTML=[...people,...bookNodes].map(n=>`<option value="${n.name.replace(/"/g,'&quot;')}">`).join("");
+const hidden=new Set();legend.innerHTML=ERAS.map(e=>`<span data-e="${e}"><b style="background:${col(e)}"></b>${e}</span>`).join("");
+legend.onclick=ev=>{const s=ev.target.closest("span");if(!s)return;const e=s.dataset.e;hidden.has(e)?hidden.delete(e):hidden.add(e);s.classList.toggle("off");build()};
+const fy=y=>y<0?(-y)+" BCE":y;
+const svg=d3.select("#g"),W=innerWidth,H=innerHeight,root=svg.append("g");
+const zoom=d3.zoom().scaleExtent([.15,6]).on("zoom",e=>root.attr("transform",e.transform));svg.call(zoom);
+const gl=root.append("g"),gn=root.append("g");
+const sim=d3.forceSimulation().force("charge",d3.forceManyBody().strength(d=>d.kind=="b"?-40:-320)).force("center",d3.forceCenter(W/2,H/2)).force("x",d3.forceX(W/2).strength(.03)).force("y",d3.forceY(H/2).strength(.04)).force("col",d3.forceCollide(d=>r(d)+6));
+const r=d=>d.kind=="b"?3.5:9+Math.sqrt(d.deg||1)*2.8;const ini=n=>n.replace(/^(G\. W\. F\.|G\. W\.|J\. G\.|F\. W\. J\.|C\. S\.|G\. E\. M\.|G\. E\.|W\. V\. O\.|J\. L\.|A\. J\.|W\. E\. B\.|D\. T\.)\s*/,"").split(/\s+/).filter(w=>/^[A-ZÀ-Ž]/.test(w)).slice(0,2).map(w=>w[0]).join("");
+let nodes,links,node,link,nbr;
+function build(){const eraF=era.value,showB=books.checked;
+ nodes=people.filter(p=>!hidden.has(p.era)&&(!eraF||p.era==eraF));const vis=new Set(nodes.map(n=>n.id));
+ links=pe.filter(e=>vis.has(e.source.id||e.source)&&vis.has(e.target.id||e.target)).map(e=>({source:e.source.id||e.source,target:e.target.id||e.target,type:e.type}));
+ if(showB){const bn=bookNodes.filter(b=>vis.has(b.author));nodes=nodes.concat(bn);links=links.concat(bookEdges.filter(e=>vis.has(e.source.id||e.source)).map(e=>({source:e.source.id||e.source,target:e.target.id||e.target,type:"b"})))}
+ nbr={};links.forEach(l=>{(nbr[l.source]??=new Set).add(l.target);(nbr[l.target]??=new Set).add(l.source)});
+ link=gl.selectAll("line").data(links,d=>d.source+">"+d.target).join("line").attr("class",d=>"link "+d.type).attr("stroke",d=>d.type=="b"?"#5a4c34":col(byId[d.source].era)).attr("stroke-width",d=>d.type=="b"?.6:1.2);
+ node=gn.selectAll("g.node").data(nodes,d=>d.id).join(en=>{const g=en.append("g").attr("class",d=>"node "+(d.kind=="b"?"book":""));g.append("circle").attr("class","base");
+ g.filter(d=>d.kind=="p"&&!PORTRAITS[d.id]).append("text").attr("class","ini").text(d=>ini(d.name));
+ g.filter(d=>d.kind=="p"&&PORTRAITS[d.id]).append("image").attr("href",d=>`portraits/${d.id}.jpg`).attr("clip-path","url(#cc)").attr("preserveAspectRatio","xMidYMin slice");
+ g.filter(d=>d.kind=="p").append("circle").attr("class","ring");g.append("text").attr("class","lbl");g.call(d3.drag().on("start",(e,d)=>{if(!e.active)sim.alphaTarget(.3).restart();d.fx=d.x;d.fy=d.y}).on("drag",(e,d)=>{d.fx=e.x;d.fy=e.y}).on("end",(e,d)=>{if(!e.active)sim.alphaTarget(0);d.fx=d.fy=null}));return g});
+ node.select("circle.base").attr("r",r).attr("fill",d=>d.kind=="b"?"#e8dcc0":col(d.era));node.select("circle.ring").attr("r",r).attr("stroke",d=>col(d.era));
+ node.select("image").attr("x",d=>-r(d)).attr("y",d=>-r(d)).attr("width",d=>2*r(d)).attr("height",d=>2*r(d));node.select("text.ini").attr("y",d=>r(d)*.35).style("font-size",d=>r(d)*.9+"px");
+ node.select("text.lbl").text(d=>d.kind=="b"?d.name:d.name).attr("x",d=>r(d)+4).attr("y",4).style("font-size",d=>d.kind=="b"?"10px":(11+Math.min(8,(d.deg||0)*.45))+"px");
+ node.on("mouseover",(e,d)=>hl(d)).on("mouseout",()=>hl(null)).on("click",(e,d)=>{e.stopPropagation();open(d.kind=="b"?byId[d.author]:d)});
+ sim.nodes(nodes).force("link",d3.forceLink(links).id(d=>d.id).distance(l=>l.type=="b"?34:105).strength(l=>l.type=="b"?.9:.25)).alpha(1).restart()}
+sim.on("tick",()=>{link.attr("x1",d=>d.source.x).attr("y1",d=>d.source.y).attr("x2",d=>d.target.x).attr("y2",d=>d.target.y);node.attr("transform",d=>`translate(${d.x},${d.y})`)});
+function hl(d){if(!d){node.classed("faded",false).classed("hl",false);link.classed("faded",false);return}const s=nbr[d.id]||new Set;node.classed("faded",n=>n.id!=d.id&&!s.has(n.id)).classed("hl",n=>n.id==d.id);link.classed("faded",l=>l.source.id!=d.id&&l.target.id!=d.id)}
+const verb={i:"influenced",c:"critiqued",r:"responded to"};
+function open(p){const out=pe.filter(e=>(e.source.id||e.source)==p.id),inn=pe.filter(e=>(e.target.id||e.target)==p.id);const a=id=>`<a onclick="go('${id}')">${byId[id].name}</a>`;
+ const pr=PORTRAITS[p.id],esc=t=>String(t).replace(/&/g,"&amp;").replace(/</g,"&lt;");
+ const img=pr?`<img src="portraits/${p.id}.jpg" alt="${esc(p.name)}">`:`<div class="ph" style="background:${col(p.era)}">${ini(p.name)}</div>`;
+ const cap=pr?`<div class="cap">${pr.c?esc(pr.c)+"<br>":""}Image: ${esc(pr.a||"unknown")} · ${esc(pr.l)} · <a href="${pr.s}" target="_blank" rel="noopener">source</a></div>`:`<div class="cap">No free portrait found</div>`;
+ const pl=(y,q)=>q&&q!=="?"&&q!=="—"?`${y}, ${q}`:y;
+ pc.innerHTML=`<div class="por">${img}<div><h2>${p.name}</h2><div class="meta">${p.era}</div>${cap}</div></div>
+ <dl><dt>Born</dt><dd>${esc(pl(p.born,p.birthplace))}</dd>${p.died&&p.died!=="—"?`<dt>Died</dt><dd>${esc(p.died==="?"?"unknown":pl(p.died,p.deathplace))}</dd>`:""}<dt>Nationality</dt><dd>${esc(p.nationality)}</dd><dt>Schools</dt><dd>${esc(p.schools)}</dd></dl>
+ <p>${esc(p.bio)}</p>${p.quote?`<blockquote>“${esc(p.quote)}”</blockquote>`:""}
+ <h3>Key ideas</h3><ul class="ideas">${p.ideas.map(k=>`<li>${esc(k)}</li>`).join("")}</ul>`+
+ (p.books.length?`<h3>Major works</h3><ul>${p.books.map(b=>`<li><i>${esc(b[0])}</i> <span class="yr">(${fy(b[1])})</span><br><small>${esc(b[2])}</small></li>`).join("")}</ul>`:`<h3>Major works</h3><p class=meta>No surviving writings; known through others.</p>`)+
+ (p.start?`<div class="start"><b style="color:var(--gold)">Start here:</b> ${esc(p.start)}</div>`:"")+
+ (inn.length?`<h3>Shaped by</h3><ul>${inn.map(e=>`<li>${a(e.source.id||e.source)} <span class=yr>— ${verb[e.type]} ${p.name.split(" ").pop()}</span></li>`).join("")}</ul>`:"")+
+ (out.length?`<h3>Went on to shape</h3><ul>${out.map(e=>`<li>${a(e.target.id||e.target)} <span class=yr>— ${verb[e.type]}</span></li>`).join("")}</ul>`:"")+`<p style="margin-top:22px"><a href="https://en.wikipedia.org/wiki/${encodeURIComponent(p.wiki.replace(/ /g,"_"))}" target="_blank" rel="noopener">Read more on Wikipedia →</a></p>`;panel.classList.add("open")}
+function go(id){const p=byId[id];open(p);hl(p);if(p.x!=null)svg.transition().duration(700).call(zoom.transform,d3.zoomIdentity.translate(W/2-200,H/2).scale(1.4).translate(-p.x,-p.y))}
+x.onclick=()=>panel.classList.remove("open");svg.on("click",()=>panel.classList.remove("open"));
+search.onchange=()=>{const q=search.value.toLowerCase();const p=people.find(p=>p.name.toLowerCase()==q)||people.find(p=>p.name.toLowerCase().includes(q))||(bookNodes.find(b=>b.name.toLowerCase().includes(q))||{}).author&&byId[bookNodes.find(b=>b.name.toLowerCase().includes(q)).author];if(p)go(p.id)};
+era.onchange=build;books.onchange=build;reset.onclick=()=>svg.transition().duration(600).call(zoom.transform,d3.zoomIdentity);
+sup.onclick=()=>donate.classList.add("open");donate.onclick=e=>{if(e.target==donate)donate.classList.remove("open")};
+document.querySelectorAll(".cp").forEach(b=>b.onclick=()=>{navigator.clipboard.writeText(b.previousElementSibling.textContent);b.textContent="Copied ✓";setTimeout(()=>b.textContent="Copy",1500)});
+build();setTimeout(()=>svg.transition().duration(900).call(zoom.transform,d3.zoomIdentity.translate(W/2,H/2).scale(.58).translate(-W/2,-H/2)),2500);
+</script></body></html>
